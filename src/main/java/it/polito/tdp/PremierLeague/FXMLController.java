@@ -10,6 +10,8 @@ import java.util.ResourceBundle;
 
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Model;
+import it.polito.tdp.PremierLeague.model.Player;
+import it.polito.tdp.PremierLeague.model.Risultato;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -47,16 +49,70 @@ public class FXMLController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
+    	this.txtResult.clear();
+    	
+    	Match m = this.cmbMatch.getValue();
+    	if(m==null) {
+    		this.txtResult.appendText("Seleziona una partita!");
+    		return;
+    	}
+    	
+    	this.model.creaGrafo(m);
+    	this.txtResult.appendText("Grafo creato!\n");
+    	this.txtResult.appendText("# Vertici : " + this.model.nVertici() + "\n");
+    	this.txtResult.appendText("# Archi : " + this.model.nArchi() + "\n");
     	
     }
 
     @FXML
     void doGiocatoreMigliore(ActionEvent event) {    	
+    	this.txtResult.clear();
+    	
+    	if(!this.model.grafoCreato()) {
+    		this.txtResult.appendText("Crea prima il grafo\n");
+    		return;
+    	}
+    	
+    	Player migliore = this.model.giocatoreMigliore();
+    	this.txtResult.appendText("Giocatore migliore:\n" + migliore.toString());
+    	this.txtResult.appendText("\nDelta efficienza = " + this.model.deltaComplessivo(migliore));
     	
     }
     
     @FXML
     void doSimula(ActionEvent event) {
+    	
+    	this.txtResult.clear();
+    	
+    	if(!this.model.grafoCreato()) {
+    		this.txtResult.appendText("Crea prima il grafo\n");
+    		return;
+    	}
+    	
+    	Match m = this.cmbMatch.getValue();
+    	if(m==null) {
+    		this.txtResult.appendText("Seleziona una partita!");
+    		return;
+    	}
+    	
+    	int nAzioni= -1;
+    	try {
+    		nAzioni = Integer.parseInt(this.txtN.getText());
+    		
+    		this.model.simula(nAzioni, m);
+    		
+    		for(Risultato ris : this.model.getMappaRis().values()) {
+    			if(ris.getSquadraId()==m.getTeamHomeID()) {
+    				this.txtResult.appendText(m.getTeamHomeNAME() + "  " + ris.toString()+ "\n");
+    			}
+    			else {
+    				this.txtResult.appendText(m.getTeamAwayNAME() + "  " + ris.toString()+ "\n");
+    			}
+    		}
+    		
+    	}catch(NumberFormatException ex) {
+    		txtResult.appendText("Errore: il numero di azioni N deve essere un intero positivo\n");
+    	}
 
     }
 
@@ -73,5 +129,7 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.cmbMatch.getItems().clear();
+    	this.cmbMatch.getItems().addAll(this.model.getAllMatches());
     }
 }
